@@ -17,6 +17,18 @@ EC_MAXSLAVE = 200
 EC_MAXGROUP = 2
 # max. number of IO segments per group
 EC_MAXIOSEGMENTS = 64
+# max. mailbox size */
+EC_MAXMBX = 1486
+# max. eeprom PDO entries */
+EC_MAXEEPDO = 0x200
+# max. SM used */
+EC_MAXSM = 8
+# max. FMMU used */
+EC_MAXFMMU = 4
+# max. Adapter */
+EC_MAXLEN_ADAPTERNAME = 128
+# define maximum number of concurrent threads in mapping */
+EC_MAX_MAPT = 1
 
 # Importing the DLL
 main_directory = os.path.dirname(os.path.abspath(__file__)) 
@@ -25,7 +37,39 @@ print(main_directory)
 dll_path = main_directory + "\\DLL\\x64\\soem.dll";
 ethercat = ctypes.cdll.LoadLibrary(dll_path)
 
-#TODO Correct some fields, define structures
+# C Structure for SM
+class ec_sm(ctypes.Structure):
+    _fields_ = [
+        ("StartAddr", ctypes.c_uint),
+        ("SMlength", ctypes.c_uint),
+        ("SMflags", ctypes.c_uint)
+        ]
+
+# C Structure for FMMU
+class ec_fmmu(ctypes.Structure):
+    _fields_ = [
+        ("LogStart", ctypes.c_uint),
+        ("LogLength", ctypes.c_uint),
+        ("LogStartbit", ctypes.c_uint8),
+        ("LogEndbit", ctypes.c_uint8),
+        ("PhysStart", ctypes.c_uint),
+        ("PhysStartBit", ctypes.c_uint8),
+        ("FMMUtype", ctypes.c_uint8),
+        ("FMMUactive", ctypes.c_uint8),
+        ("unused1", ctypes.c_uint8),
+        ("unused2", ctypes.c_uint)
+        ]
+
+# Define callback function
+PO2SOconfig = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_uint)
+
+# Array for SM(Sync Manager)
+sm_array = ec_sm * EC_MAXSM
+
+# Array for FMMU(Fieldbus Memory Management Unit)
+fmmu_array = ec_fmmu * EC_MAXFMMU
+
+# C structure for our slave
 class ec_slavet(ctypes.Structure):
     _fields_ = [
         ("state", ctypes.c_uint), 
@@ -45,9 +89,9 @@ class ec_slavet(ctypes.Structure):
         ("Ibytes", ctypes.c_uint),
         ("inputs", ctypes.POINTER(ctypes.c_uint8)), 
         ("Istartbit", ctypes.c_uint8),
-        ("SM", ctypes.c_int), #TODO make structure SM 
-        ("SMtype", ctypes.c_int), #TODO make structure SM
-        ("FMMU", ctypes.c_int), #TODO make structure FMMU
+        ("SM", sm_array),
+        ("SMtype", sm_array),
+        ("FMMU", fmmu_array), 
         ("FMMU0func", ctypes.c_uint8),
         ("FMMU1func", ctypes.c_uint8), 
         ("FMMU2func", ctypes.c_uint8),
@@ -89,7 +133,7 @@ class ec_slavet(ctypes.Structure):
         ("group", ctypes.c_uint8),
         ("FMMUunused", ctypes.c_uint8), 
         ("islost", ctypes.c_bool),
-        ("PO2SOconfig", ctypes.c_int), 
+        ("PO2SOconfig", PO2SOconfig), 
         ("name", ctypes.c_char)
     ]
 
@@ -151,3 +195,11 @@ def ec_readstate():
 # Close the ethercat interface
 def ec_close():
     return c_ec_close
+
+# Prints a structure for testing: See https://stackoverflow.com/questions/20986330/print-all-fields-of-ctypes-structure-with-introspection
+def __str__(self):
+    return "{}: {{{}}}".format(self.__class__.__name__,
+                               ", ".join(["{}: {}".format(field[0],
+                                                          getattr(self,
+                                                                  field[0]))
+                                          for field in self._fields_]))
