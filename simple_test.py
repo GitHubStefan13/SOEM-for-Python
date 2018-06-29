@@ -12,26 +12,24 @@ if soem.ec_init(npf_device):
         print("No EtherCat-Slaves found")
     else:
         soem.ec_send_processdata()
-        print("Found", soem.ec_slavecount, "Slave/s")
+        print("Found", soem.ec_slavecount.value, "Slave/s")
 
         wkc = 0
-        wkc = soem.ec_receive_processdata(200000)
+        wkc = soem.ec_receive_processdata(2000000)
 
-        # Testprint our slaves...       
-        # Option 1, only seems to print the fields not the values itself
-        #print(soem.ec_slavet._fields_)
-        # Option 2
-        soem.__str__(soem.ec_slaves) 
+        for x in range(0, 200):
+            print(soem.c_get_ec_slaves(x))
 
         while True:
-            wkc = soem.ec_receive_processdata(200000)
+		    soem.ec_send_processdata
+            wkc = soem.ec_receive_processdata(2000000)
             if wkc == -1:
                 print("Error receiving Working Counter")
                 break
             else:
                 print(wkc)
-                if wkc >= 2000:
-                    print("Working Counter reached 2000, everything seems to work...stopping now")
+                if wkc >= 2:
+                    print("Working Counter reached 2, everything seems to work...stopping now")
                     break
 
 
