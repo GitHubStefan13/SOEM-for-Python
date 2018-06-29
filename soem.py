@@ -5,6 +5,7 @@ import platform
 # The global variables, also received from the DLL
 global ec_slavecount
 global ec_slaves
+global slaves
 
 # Some constant entries taken from SOEM
 # max. entries in EtherCAT error list
@@ -34,7 +35,7 @@ EC_MAX_MAPT = 1
 main_directory = os.path.dirname(os.path.abspath(__file__)) 
 platform.system()
 print(main_directory)
-dll_path = main_directory + "\\DLL\\x64\\soem.dll";
+dll_path = main_directory + "\\DLL\\x86\\soem.dll"
 ethercat = ctypes.cdll.LoadLibrary(dll_path)
 
 # C Structure for SM
@@ -168,8 +169,8 @@ c_ec_receive_processdata.argtyprs = [ctypes.c_int]
 c_ec_receive_processdata.restype = ctypes.c_int
 
 # Defining were we find our exported variables
-ec_slavecount = ctypes.c_int.in_dll(ethercat, 'ec_slavecount').value
-ec_slaves = ec_slavet.in_dll(ethercat, 'ec_slave')
+ec_slavecount = ctypes.c_uint8.in_dll(ethercat, 'ec_slavecount')
+ec_slaves = (ec_slavet * EC_MAXSLAVE).in_dll(ethercat, 'ec_slave')
 
 # Initiliaze the ethercat interface
 def ec_init(npf_device):
@@ -203,3 +204,4 @@ def __str__(self):
                                                           getattr(self,
                                                                   field[0]))
                                           for field in self._fields_]))
+
